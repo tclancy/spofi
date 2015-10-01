@@ -5,9 +5,12 @@ import sys
 from bs4 import BeautifulSoup
 import requests
 
+MIN_GAMES_IN_WEEK = 4
 GAME_FINDER = re.compile("[A-Z][\w\s\.]+\sat\s[A-Z][\w\s\.]+")
+MATCHUP_SPLITTER = re.compile("<br\s*/?>")
 TEAM_BREAKER = re.compile("\s+at\s+")
 BET_BREAKER = re.compile("\s+by\s+")
+SPREAD_CLEANER = re.compile("[^\d]+")
 
 logging.basicConfig(stream=sys.stdout, level=logging.WARN)
 logger = logging.getLogger(__file__)
@@ -45,16 +48,30 @@ class Parser(object):
 
     def tabulate_votes(self, comments):
         for c in comments:
-            for bet in [bet for bet in c.text.split("\n")
+            if c.text.count("\n") < MIN_GAMES_IN_WEEK:
+                raw = MATCHUP_SPLITTER.split(c.decode_contents(formatter="html"))
+            else:
+                raw = c.text.split("\n")
+            if len(raw) < MIN_GAMES_IN_WEEK:
+                logger.warn("Skipping this as too short: %s", c.text)
+            for bet in [bet for bet in raw
                         if bet and bet.find("posted by") == -1
                         and bet.lower().find(" by ") > -1]:
                 bet = bet.lower().strip()
-                winner, spread = BET_BREAKER.split(bet)
-                # ignore lock comments after the bet
-                spread = spread.split(" ")[0]
+                try:
+                    winner, spread = BET_BREAKER.split(bet)
+                except ValueError:
+                    logger.error("Could not parse %s", bet)
+                    continue
+                # ignore lock comments after the bet, clean out punctuation next to bet
+                spread = SPREAD_CLEANER.sub("", spread.split(" ")[0])
                 try:
                     key = self.teams[winner]
-                    self.games[key][winner].append(int(spread))
+                    try:
+                        self.games[key][winner].append(int(spread))
+                    except ValueError:
+                        # mainly people writing "by seven"
+                        logger.warn("Could not parse spread for %s", bet)
                     if self.is_lock(bet):
                         self.locks[winner] = self.locks.get(winner, 0) + 1
                 except KeyError:
@@ -83,3 +100,5 @@ class Parser(object):
 
 if __name__ == "__main__":
     p = Parser("http://www.sportsfilter.com/news/20820/nfl-pick-em-week-4-first-place")
+    # p = Parser("http://www.sportsfilter.com/news/20803/nfl-pick-em-week-3-indys-bad-luck-edition")
+    # p = Parser("http://www.sportsfilter.com/news/20790/nfl-pick-em-week-2-teddy-bridgewater-fail")
