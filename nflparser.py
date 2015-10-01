@@ -65,6 +65,7 @@ class Parser(object):
                 # ignore lock comments after the bet, clean out punctuation next to bet
                 spread = SPREAD_CLEANER.sub("", spread.split(" ")[0])
                 try:
+                    # TODO: look up via alternatives, handle new york problem!
                     key = self.teams[winner]
                     try:
                         self.games[key][winner].append(int(spread))
