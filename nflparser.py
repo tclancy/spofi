@@ -6,11 +6,11 @@ from bs4 import BeautifulSoup
 import requests
 
 MIN_GAMES_IN_WEEK = 4
-GAME_FINDER = re.compile("[A-Z][\w\s\.]+\sat\s[A-Z][\w\s\.]+")
-MATCHUP_SPLITTER = re.compile("<br\s*/?>")
-TEAM_BREAKER = re.compile("\s+at\s+")
-BET_BREAKER = re.compile("\s+by\s+")
-SPREAD_CLEANER = re.compile("[^\d]+")
+GAME_FINDER = re.compile(r"[A-Z][\w\s\.]+\sat\s[A-Z][\w\s\.]+")
+MATCHUP_SPLITTER = re.compile(r"<br\s*/?>")
+TEAM_BREAKER = re.compile(r"\s+at\s+")
+BET_BREAKER = re.compile(r"\s+by\s+")
+SPREAD_CLEANER = re.compile(r"[^\d]+")
 
 logging.basicConfig(stream=sys.stdout, level=logging.WARN)
 logger = logging.getLogger(__file__)
@@ -44,7 +44,6 @@ class Parser(object):
                 self.games[key] = {home: [], away: [], "name": matches[0]}
                 self.teams[home.lower()] = key
                 self.teams[away.lower()] = key
-                
 
     def tabulate_votes(self, comments):
         for c in comments:
@@ -53,7 +52,7 @@ class Parser(object):
             else:
                 raw = c.text.split("\n")
             if len(raw) < MIN_GAMES_IN_WEEK:
-                logger.warn("Skipping this as too short: %s", c.text)
+                logger.warn(u"Skipping this as too short: %s", c.text)
             for bet in [bet for bet in raw
                         if bet and bet.lower().find("posted by") == -1
                         and bet.lower().find(" by ") > -1]:
@@ -61,7 +60,7 @@ class Parser(object):
                 try:
                     winner, spread = BET_BREAKER.split(bet)
                 except ValueError:
-                    logger.error("Could not parse %s", bet)
+                    logger.error(u"Could not parse %s", bet)
                     continue
                 # ignore lock comments after the bet, clean out punctuation next to bet
                 spread = SPREAD_CLEANER.sub("", spread.split(" ")[0])
@@ -71,11 +70,11 @@ class Parser(object):
                         self.games[key][winner].append(int(spread))
                     except ValueError:
                         # mainly people writing "by seven"
-                        logger.warn("Could not parse spread for %s", bet)
+                        logger.warn(u"Could not parse spread for %s", bet)
                     if self.is_lock(bet):
                         self.locks[winner] = self.locks.get(winner, 0) + 1
                 except KeyError:
-                    logger.warn("Could not find a game for %s (%s)", winner, bet)
+                    logger.warn(u"Could not find a game for %s (%s)", winner, bet)
 
     def summarize(self):
         for data in self.games.values():
@@ -87,11 +86,10 @@ class Parser(object):
                     votes = len(v)
                     average = sum(v) / float(votes) if votes else 0.0
                     results.append("%s: %d votes, %.2f average spread" % (k, votes, average))
-            print "%s: %s / %s" % (name, results[0], results[1])
-        print "== LOCKS == (TODO: handle bolding)"
+            print u"%s: %s / %s" % (name, results[0], results[1])
+        print u"== LOCKS == (TODO: handle bolding)"
         for k, v in self.locks.items():
-            print "%s: %d" % (k, v)
-            
+            print u"%s: %d" % (k, v)
 
     def is_lock(self, bet):
         "Really guessing here, need to look at raw HTML for <b>/ <strong> tags"
