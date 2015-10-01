@@ -172,6 +172,11 @@ class Parser(object):
         return team
 
     def summarize(self):
+        """
+        Show how many people voted for each side and what the average spread on each side was
+        TODO: get the max vote count for any game so we can highlight games (NYJ/ NYG) where totals are low
+        TODO: track highest vote winner(s)
+        """
         for data in self.games.values():
             results = []
             for k, v in data.items():
