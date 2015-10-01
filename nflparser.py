@@ -15,8 +15,14 @@ SPREAD_CLEANER = re.compile(r"[^\d]+")
 logging.basicConfig(stream=sys.stdout, level=logging.WARN)
 logger = logging.getLogger(__file__)
 
-# TODO: fill out team mascot, city shorthands, etc.
-ALIASES = {}
+# fill out team mascot, city shorthands, etc.
+ALIASES = {
+    "jets": "new york jets",
+    "giants": "new york giants",
+    "kc": "kansas city",
+    "patriots": "new england",
+    "ind": "indianapolis"
+}
 
 
 class Parser(object):
@@ -62,10 +68,10 @@ class Parser(object):
                 except ValueError:
                     logger.error(u"Could not parse %s", bet)
                     continue
+                winner = self.get_normalized_team(winner)
                 # ignore lock comments after the bet, clean out punctuation next to bet
                 spread = SPREAD_CLEANER.sub("", spread.split(" ")[0])
                 try:
-                    # TODO: look up via alternatives, handle new york problem!
                     key = self.teams[winner]
                     try:
                         self.games[key][winner].append(int(spread))
@@ -75,7 +81,32 @@ class Parser(object):
                     if self.is_lock(bet):
                         self.locks[winner] = self.locks.get(winner, 0) + 1
                 except KeyError:
-                    logger.warn(u"Could not find a game for %s (%s)", winner, bet)
+                    logger.warn(u"Could not find a game for \"%s\": (%s)", winner, bet)
+
+    def get_normalized_team(self, team):
+        """
+        Remove content with "lock" in it
+        Look for alternate team name in ALIASES list
+        When all else fails, start splitting on spaces until you find it somewhere
+        TODO: handle "new york" problem
+        """
+        original = team
+        team = re.sub(r"\s*lock\s*", "", team)
+        team = ALIASES.get(team, team)
+        if team not in self.teams:
+            words = original.split(" ")
+            lookup = ""
+            for word in words:
+                lookup += " %s" % word
+                lookup = lookup.strip()
+                logger.debug("Trying %s|||", lookup)
+                if lookup in self.teams:
+                    team = lookup
+                    break
+                if lookup in ALIASES:
+                    team = lookup
+                    break
+        return team
 
     def summarize(self):
         for data in self.games.values():
