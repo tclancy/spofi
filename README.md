@@ -5,4 +5,4 @@ Install by creating a [virtualenv](http://docs.python-guide.org/en/latest/dev/vi
 (or use your native Python install) and running `pip install -r requirements.txt` from the root.
 
 Right now the page URLs are hard-coded in the bottom of the command, need to update it to accept
-command-line arguments.
+command-line arguments. Run with `python nflparser.py`.
