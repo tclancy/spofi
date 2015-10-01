@@ -11,17 +11,77 @@ MATCHUP_SPLITTER = re.compile(r"<br\s*/?>")
 TEAM_BREAKER = re.compile(r"\s+at\s+")
 BET_BREAKER = re.compile(r"\s+by\s+")
 SPREAD_CLEANER = re.compile(r"[^\d]+")
+PUNCTUATION_CLEANER = re.compile(r"\.")
 
 logging.basicConfig(stream=sys.stdout, level=logging.WARN)
 logger = logging.getLogger(__file__)
 
 # fill out team mascot, city shorthands, etc.
 ALIASES = {
+    "nyj": "new york jets",
+    "nyg": "new york giants",
     "jets": "new york jets",
     "giants": "new york giants",
+    "ny jets": "new york jets",
+    "ny giants": "new york giants",
+    "n.y. jets": "new york jets",
+    "n.y. giants": "new york giants",
+    # ugh
+    "new york football giants": "new york giants",
     "kc": "kansas city",
+    "kan": "kansas city",
+    "chiefs": "kansas city",
+    "ne": "new england",
+    "newengland": "new england",
+    "pats": "new england",
     "patriots": "new england",
-    "ind": "indianapolis"
+    "ind": "indianapolis",
+    "colts": "indianapolis",
+    "indy": "indianapolis",
+    "phi": "philadelphia",
+    "philly": "philadelphia",
+    "eagles": "philadelphia",
+    "pit": "pittsburgh",
+    "steelers": "pittsburgh",
+    "car": "carolina",
+    "panthers": "carolina",
+    "min": "minnesota",
+    "vikings": "minnesota",
+    "vikes": "minnesota",
+    "cle": "cleveland",
+    "browns": "cleveland",
+    "bal": "baltimore",
+    "ravens": "baltimore",
+    "hou": "houston",
+    "texans": "houston",
+    "ari": "arizona",
+    "cardinals": "arizona",
+    "mia": "miami",
+    "dolphins": "miami",
+    "sea": "seattle",
+    "seahawks": "seattle",
+    "den": "denver",
+    "broncos": "denver",
+    "gb": "green bay",
+    "packers": "green bay",
+    "pack": "green bay",
+    "rams": "st louis",
+    "stl": "st louis",
+    "atl": "atlanta",
+    "falcons": "atlanta",
+    "cardinals": "arizona",
+    "ari": "arizona",
+    "buf": "buffalo",
+    "bills": "buffalo",
+    "cin": "cincinnati",
+    "bengals": "cincinnati",
+    "bungles": "cincinnati",
+    "ten": "tennesse",
+    "titans": "tennesse",
+    "saints": "new orleans",
+    "no": "new orleans",
+    "chargers": "san diego",
+    "sd": "san diego",
 }
 
 
@@ -44,8 +104,8 @@ class Parser(object):
             matches = GAME_FINDER.findall(line)
             if matches:
                 home, away = TEAM_BREAKER.split(matches[0])
-                home = home.lower()
-                away = away.lower()
+                home = PUNCTUATION_CLEANER.sub("", home.lower())
+                away = PUNCTUATION_CLEANER.sub("", away.lower())
                 key = u"%s-%s" % (home, away)
                 self.games[key] = {home: [], away: [], "name": matches[0]}
                 self.teams[home.lower()] = key
@@ -87,11 +147,14 @@ class Parser(object):
         """
         Remove content with "lock" in it
         Look for alternate team name in ALIASES list
+        Remove parenthetical asides
         When all else fails, start splitting on spaces until you find it somewhere
         TODO: handle "new york" problem
         """
         original = team
+        team = PUNCTUATION_CLEANER.sub("", team)
         team = re.sub(r"\s*lock\s*", "", team)
+        team = re.sub(r"\s*\(.*\)\s*", "", team)
         team = ALIASES.get(team, team)
         if team not in self.teams:
             words = original.split(" ")
