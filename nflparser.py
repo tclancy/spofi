@@ -55,7 +55,7 @@ class Parser(object):
             if len(raw) < MIN_GAMES_IN_WEEK:
                 logger.warn("Skipping this as too short: %s", c.text)
             for bet in [bet for bet in raw
-                        if bet and bet.find("posted by") == -1
+                        if bet and bet.lower().find("posted by") == -1
                         and bet.lower().find(" by ") > -1]:
                 bet = bet.lower().strip()
                 try:
@@ -102,3 +102,4 @@ if __name__ == "__main__":
     p = Parser("http://www.sportsfilter.com/news/20820/nfl-pick-em-week-4-first-place")
     # p = Parser("http://www.sportsfilter.com/news/20803/nfl-pick-em-week-3-indys-bad-luck-edition")
     # p = Parser("http://www.sportsfilter.com/news/20790/nfl-pick-em-week-2-teddy-bridgewater-fail")
+    # p = Parser("http://www.sportsfilter.com/news/20769/nfl-pick-em-week-1-win-one-duke")
