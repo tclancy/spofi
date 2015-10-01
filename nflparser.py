@@ -90,8 +90,12 @@ class Parser(object):
         r = requests.get(url)
         bs = BeautifulSoup(r.text, "html.parser")
         comments = bs.find_all("div", class_="comments")
+        self.top_vote_count = 0
+        self.most_votes = 0
+        self.top_locks = [("Nobody", 0)]
         self.assemble_games(comments[0])
         self.tabulate_votes(comments[1:])
+        self.analyze()
         self.summarize()
 
     def assemble_games(self, first_comment):
@@ -171,25 +175,48 @@ class Parser(object):
                     break
         return team
 
+    def analyze(self):
+        """
+        A. we could do a lot better on the function name here
+        B. find the total vote counts for games, so we can look for games under that # (NY)
+        C. look for game(s) that are the biggest "lock" of the week
+        """
+        for data in self.games.values():
+            for k, v in data.items():
+                if k == "name":
+                    continue
+                # man this is a shit way to do this
+                current_max = self.top_locks[0][1]
+                votes = len(v)
+                self.most_votes = max(self.most_votes, votes)
+                if votes > current_max:
+                    self.top_locks = [(k, votes)]
+                elif votes == current_max:
+                    self.top_locks.append((k, votes))
+
     def summarize(self):
         """
         Show how many people voted for each side and what the average spread on each side was
-        TODO: get the max vote count for any game so we can highlight games (NYJ/ NYG) where totals are low
-        TODO: track highest vote winner(s)
         """
         for data in self.games.values():
             results = []
+            total_votes = 0
             for k, v in data.items():
                 if k == "name":
                     name = v
                 else:
                     votes = len(v)
+                    total_votes += votes
                     average = sum(v) / float(votes) if votes else 0.0
                     results.append("%s: %d votes, %.2f average spread" % (k, votes, average))
-            print u"%s: %s / %s" % (name, results[0], results[1])
+            print u"%s: %s / %s%s" % (name, results[0], results[1], " Missing votes" if total_votes < self.most_votes else "")
         print u"== LOCKS == (TODO: handle bolding)"
         for k, v in self.locks.items():
             print u"%s: %d" % (k, v)
+        print u"== BIG WINNERS =="
+        for team, _ in self.top_locks:
+            print team
+        
 
     def is_lock(self, bet):
         "Really guessing here, need to look at raw HTML for <b>/ <strong> tags"
