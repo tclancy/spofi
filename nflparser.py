@@ -1,3 +1,4 @@
+import argparse
 import logging
 import re
 import sys
@@ -213,7 +214,7 @@ class Parser(object):
         print u"== LOCKS == (TODO: handle bolding)"
         for k, v in self.locks.items():
             print u"%s: %d" % (k, v)
-        print u"== BIG WINNERS =="
+        print u"== BIG WINNER%s ==" % ("S" if len(self.top_locks) != 1 else "")
         for team, _ in self.top_locks:
             print team
         
@@ -224,7 +225,11 @@ class Parser(object):
 
 
 if __name__ == "__main__":
-    p = Parser("http://www.sportsfilter.com/news/20820/nfl-pick-em-week-4-first-place")
+    argument = argparse.ArgumentParser()
+    argument.add_argument("--post", help="Sportsfilter Post ID")
+    args = argument.parse_args()
+    post = int(args.post) if args.post else 20820
+    p = Parser("http://www.sportsfilter.com/news/%d" % post)
     # p = Parser("http://www.sportsfilter.com/news/20803/nfl-pick-em-week-3-indys-bad-luck-edition")
     # p = Parser("http://www.sportsfilter.com/news/20790/nfl-pick-em-week-2-teddy-bridgewater-fail")
     # p = Parser("http://www.sportsfilter.com/news/20769/nfl-pick-em-week-1-win-one-duke")
