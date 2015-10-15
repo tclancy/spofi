@@ -75,6 +75,7 @@ ALIASES = {
     "buf": "buffalo",
     "bills": "buffalo",
     "cin": "cincinnati",
+    "cincy": "cincinnati",
     "bengals": "cincinnati",
     "bungles": "cincinnati",
     "ten": "tennesse",
@@ -83,6 +84,10 @@ ALIASES = {
     "no": "new orleans",
     "chargers": "san diego",
     "sd": "san diego",
+    "lions": "detroit",
+    "sf": "san fransisco",
+    "niners": "san fransisco",
+    "san fran": "san fransisco",
 }
 
 
@@ -217,7 +222,6 @@ class Parser(object):
         print u"== BIG WINNER%s ==" % ("S" if len(self.top_locks) != 1 else "")
         for team, _ in self.top_locks:
             print team
-        
 
     def is_lock(self, bet):
         "Really guessing here, need to look at raw HTML for <b>/ <strong> tags"
