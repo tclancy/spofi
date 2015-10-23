@@ -6,7 +6,7 @@ import sys
 from bs4 import BeautifulSoup
 import requests
 
-MIN_GAMES_IN_WEEK = 4
+MIN_GAMES_IN_WEEK = 1
 GAME_FINDER = re.compile(r"[A-Z][\w\s\.]+\sat\s[A-Z][\w\s\.]+")
 MATCHUP_SPLITTER = re.compile(r"<br\s*/?>")
 TEAM_BREAKER = re.compile(r"\s+at\s+")
@@ -70,8 +70,6 @@ ALIASES = {
     "stl": "st louis",
     "atl": "atlanta",
     "falcons": "atlanta",
-    "cardinals": "arizona",
-    "ari": "arizona",
     "buf": "buffalo",
     "bills": "buffalo",
     "cin": "cincinnati",
